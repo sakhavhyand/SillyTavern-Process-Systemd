@@ -1,11 +1,7 @@
 import { Router } from 'express';
 import { jsonParser } from '../../src/express-common.js';
 import { createRequire } from 'module';
-import { spawn } from 'child_process';
 const require  = createRequire(import.meta.url);
-const path = require('path');
-const sanitize = require('sanitize-filename');
-const fs = require('fs');
 const { exec } = require('child_process');
 
 
