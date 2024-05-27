@@ -6,7 +6,7 @@ const require  = createRequire(import.meta.url);
 const path = require('path');
 const sanitize = require('sanitize-filename');
 const fs = require('fs');
-
+const { exec } = require('child_process');
 
 
 /**
@@ -18,17 +18,30 @@ export async function init(router) {
 		res.send('process plugin is active');
 	});
 	router.get('/exit', jsonParser, (req, res)=>{
-		process.emit('SIGINT');
-		res.send('shutting down SillyTavern WebServer');
+        exec('systemctl --user stop silly-tavern.service', (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error: ${error.message}`);
+                return;
+            }
+            if (stderr) {
+                console.error(`Error in stderr: ${stderr}`);
+                return;
+            }
+            res.send('shutting down SillyTavern WebServer');
+        });
 	});
 	router.get('/restart', jsonParser, (req, res)=>{
-		spawn(process.argv0, process.argv.slice(1), {
-			stdio: 'ignore',
-			detached: true,
-			shell: true,
-		}).unref();
-		process.emit('SIGINT');
-		res.send('restarting SillyTavern WebServer');
+        exec('systemctl --user stop silly-tavern.service', (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error: ${error.message}`);
+                return;
+            }
+            if (stderr) {
+                console.error(`Error in stderr: ${stderr}`);
+                return;
+            }
+            res.send('restarting SillyTavern WebServer');
+        });
 	});
 }
 
