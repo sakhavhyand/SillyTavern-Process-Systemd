@@ -27,7 +27,7 @@ export async function init(router) {
         });
 	});
 	router.get('/restart', jsonParser, (req, res)=>{
-        exec('systemctl --user stop silly-tavern.service', (error, stdout, stderr) => {
+        exec('systemctl --user restart silly-tavern.service', (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error: ${error.message}`);
                 return;
