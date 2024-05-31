@@ -3,7 +3,7 @@ import { jsonParser } from '../../src/express-common.js';
 import { createRequire } from 'module';
 const require  = createRequire(import.meta.url);
 const { exec } = require('child_process');
-
+const os = require('os');
 
 /**
  *
@@ -14,44 +14,54 @@ export async function init(router) {
 		res.send('process plugin is active');
 	});
     router.get('/exit', jsonParser, (req, res)=>{
-        process.emit('SIGINT');
-        res.send('shutting down SillyTavern WebServer');
+        if(os.platform() === 'win32'){
+            process.emit('SIGINT');
+            res.send('shutting down SillyTavern WebServer');
+        }
+        else if (os.platform() === 'linux') {
+            exec('systemctl --user stop silly-tavern.service', (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`Error: ${error.message}`);
+                    return;
+                }
+                if (stderr) {
+                    console.error(`Error in stderr: ${stderr}`);
+                    return;
+                }
+                res.send('shutting down SillyTavern WebServer');
+            });
+        }
+        else {
+            console.error('Other OS detected.');
+        }
     });
     router.get('/restart', jsonParser, (req, res)=>{
-        spawn(process.argv0, process.argv.slice(1), {
-            stdio: 'ignore',
-            detached: true,
-            shell: true,
-        }).unref();
-        process.emit('SIGINT');
-        res.send('restarting SillyTavern WebServer');
-    });
-	router.get('/exit-linux', jsonParser, (req, res)=>{
-        exec('systemctl --user stop silly-tavern.service', (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Error: ${error.message}`);
-                return;
-            }
-            if (stderr) {
-                console.error(`Error in stderr: ${stderr}`);
-                return;
-            }
-            res.send('shutting down SillyTavern WebServer');
-        });
-	});
-	router.get('/restart-linux', jsonParser, (req, res)=>{
-        exec('systemctl --user restart silly-tavern.service', (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Error: ${error.message}`);
-                return;
-            }
-            if (stderr) {
-                console.error(`Error in stderr: ${stderr}`);
-                return;
-            }
+        if(os.platform() === 'win32'){
+            spawn(process.argv0, process.argv.slice(1), {
+                stdio: 'ignore',
+                detached: true,
+                shell: true,
+            }).unref();
+            process.emit('SIGINT');
             res.send('restarting SillyTavern WebServer');
-        });
-	});
+        }
+        else if (os.platform() === 'linux') {
+            exec('systemctl --user restart silly-tavern.service', (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`Error: ${error.message}`);
+                    return;
+                }
+                if (stderr) {
+                    console.error(`Error in stderr: ${stderr}`);
+                    return;
+                }
+                res.send('restarting SillyTavern WebServer');
+            });
+        }
+        else {
+            console.error('Other OS detected.');
+        }
+    });
 }
 
 export async function exit() {}
