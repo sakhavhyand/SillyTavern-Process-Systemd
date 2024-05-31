@@ -13,7 +13,20 @@ export async function init(router) {
 	router.get('/', jsonParser, (req, res)=>{
 		res.send('process plugin is active');
 	});
-	router.get('/exit', jsonParser, (req, res)=>{
+    router.get('/exit', jsonParser, (req, res)=>{
+        process.emit('SIGINT');
+        res.send('shutting down SillyTavern WebServer');
+    });
+    router.get('/restart', jsonParser, (req, res)=>{
+        spawn(process.argv0, process.argv.slice(1), {
+            stdio: 'ignore',
+            detached: true,
+            shell: true,
+        }).unref();
+        process.emit('SIGINT');
+        res.send('restarting SillyTavern WebServer');
+    });
+	router.get('/exit-linux', jsonParser, (req, res)=>{
         exec('systemctl --user stop silly-tavern.service', (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error: ${error.message}`);
@@ -26,7 +39,7 @@ export async function init(router) {
             res.send('shutting down SillyTavern WebServer');
         });
 	});
-	router.get('/restart', jsonParser, (req, res)=>{
+	router.get('/restart-linux', jsonParser, (req, res)=>{
         exec('systemctl --user restart silly-tavern.service', (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error: ${error.message}`);
